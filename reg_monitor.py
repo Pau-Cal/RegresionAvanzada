@@ -24,7 +24,7 @@ TARGET_TECHNICAL_REG_KEYWORDS = [
     "REGLAMENTO TECNICO",
 ]
 
-RECIPIENT_EMAIL = "paula.calviello@dell.com"
+RECIPIENT_EMAIL = os.getenv("AGENT_RECIPIENT_EMAIL", "recipient@example.com")
 SENDER_EMAIL = os.getenv("AGENT_SENDER_EMAIL", "your_sender_email@example.com")
 SMTP_SERVER = os.getenv("AGENT_SMTP_SERVER", "smtp.example.com")
 SMTP_PORT = int(os.getenv("AGENT_SMTP_PORT", "587"))
@@ -152,10 +152,14 @@ def process_new_publications() -> None:
             summary = summarize_with_llm(pub["text"])
             send_email_notification(f"[Regulación AR] {pub['title']}", summary, RECIPIENT_EMAIL)
         except Exception as exc:
-            logging.exception("Error processing publication")
+            logging.exception(
+                "Error processing publication: title=%s url=%s",
+                pub.get("title"),
+                pub.get("url"),
+            )
             append_audit_log({"error": str(exc), "url": pub.get("url"), "title": pub.get("title")})
 
-    print("RUN OK")
+    logging.info("Run completed successfully")
 
 
 if __name__ == "__main__":
