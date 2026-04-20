@@ -7,7 +7,7 @@ import smtplib
 from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from html.parser import HTMLParser
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin
 from urllib.request import Request, urlopen
 
@@ -37,7 +37,10 @@ TARGET_TECHNICAL_REG_KEYWORDS = [
     "REGLAMENTO TECNICO",
 ]
 
-RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL", "recipient@example.com")
+RECIPIENT_EMAIL = os.getenv("AGENT_RECIPIENT_EMAIL") or os.getenv(
+    "RECIPIENT_EMAIL",
+    "recipient@example.com",
+)
 SENDER_EMAIL = os.getenv("AGENT_SENDER_EMAIL", "your_sender_email@example.com")
 SMTP_SERVER = os.getenv("AGENT_SMTP_SERVER", "smtp.example.com")
 SMTP_PORT = int(os.getenv("AGENT_SMTP_PORT", "587"))
@@ -66,7 +69,7 @@ class DailyPublicationsParser(HTMLParser):
         self.current_url: Optional[str] = None
         self.publications: List[Dict[str, str]] = []
 
-    def handle_starttag(self, tag: str, attrs: List[tuple[str, Optional[str]]]) -> None:
+    def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
         attrs_dict = dict(attrs)
 
         if tag == "article":
@@ -117,7 +120,7 @@ class ArticleTextParser(HTMLParser):
         self.article_depth = 0
         self.parts: List[str] = []
 
-    def handle_starttag(self, tag: str, attrs: List[tuple[str, Optional[str]]]) -> None:
+    def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
         if tag == "article":
             self.article_depth += 1
 
@@ -200,7 +203,7 @@ def classify_publication(pub: Dict[str, Any]) -> Dict[str, Any]:
 # =========================
 
 
-def summarize_with_llm(text: str, max_chars: int = 6000) -> str:
+def generate_placeholder_summary(text: str, max_chars: int = 6000) -> str:
     text = text[:max_chars]
     return (
         "RESUMEN EJECUTIVO (EJEMPLO):\n"
@@ -289,7 +292,7 @@ def process_new_publications() -> None:
                 continue
 
             relevant_count += 1
-            summary = summarize_with_llm(pub["text"])
+            summary = generate_placeholder_summary(pub["text"])
 
             send_email_notification(
                 f"[Regulación AR] {pub['title']}",
