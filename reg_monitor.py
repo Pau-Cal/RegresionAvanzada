@@ -55,15 +55,15 @@ RECIPIENT_EMAIL = get_env_value(
 SENDER_EMAIL = get_env_value(
     "AGENT_SENDER_EMAIL",
     "SENDER_EMAIL",
-    default="your_sender_email@example.com",
+    default="",
 )
-SMTP_SERVER = get_env_value("AGENT_SMTP_SERVER", "SMTP_SERVER", default="smtp.example.com")
+SMTP_SERVER = get_env_value("AGENT_SMTP_SERVER", "SMTP_SERVER", default="")
 SMTP_PORT = int(get_env_value("AGENT_SMTP_PORT", "SMTP_PORT", default="587"))
-SMTP_USER = get_env_value("AGENT_SMTP_USER", "SMTP_USER", default="smtp_user")
+SMTP_USER = get_env_value("AGENT_SMTP_USER", "SMTP_USER", default="")
 SMTP_PASSWORD = get_env_value(
     "AGENT_SMTP_PASSWORD",
     "SMTP_PASSWORD",
-    default="smtp_password",
+    default="",
 )
 
 AUDIT_LOG_FILE = os.path.join(BASE_DIR, "reg_monitor_audit_log.jsonl")
@@ -76,6 +76,8 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
 )
+
+PLACEHOLDER_SUMMARY_WARNED = False
 
 
 class DailyPublicationsParser(HTMLParser):
@@ -224,7 +226,10 @@ def classify_publication(pub: Dict[str, Any]) -> Dict[str, Any]:
 
 def generate_placeholder_summary(text: str, max_input_chars: int = 6000) -> str:
     """Temporary summary generator until a real summarization service is connected."""
-    logging.warning("Using placeholder summary because real summarization is not configured.")
+    global PLACEHOLDER_SUMMARY_WARNED
+    if not PLACEHOLDER_SUMMARY_WARNED:
+        logging.warning("Using placeholder summary because real summarization is not configured.")
+        PLACEHOLDER_SUMMARY_WARNED = True
     text = text[:max_input_chars]
     return (
         "RESUMEN EJECUTIVO (EJEMPLO):\n"
@@ -240,14 +245,7 @@ def generate_placeholder_summary(text: str, max_input_chars: int = 6000) -> str:
 
 
 def smtp_is_configured() -> bool:
-    placeholder_values = {
-        "your_sender_email@example.com",
-        "smtp.example.com",
-        "smtp_user",
-        "smtp_password",
-    }
-    values = {SENDER_EMAIL, SMTP_SERVER, SMTP_USER, SMTP_PASSWORD}
-    return not values.intersection(placeholder_values)
+    return all([SENDER_EMAIL, SMTP_SERVER, SMTP_USER, SMTP_PASSWORD])
 
 
 def send_email_notification(subject: str, body: str, recipient: str) -> None:
@@ -322,7 +320,8 @@ def process_new_publications() -> None:
 
         except Exception as error:
             logging.exception(
-                "Error processing publication: %s",
+                "Error processing publication (%s): %s",
+                type(error).__name__,
                 pub.get("title") or pub.get("url") or "sin identificar",
             )
             append_audit_log(
