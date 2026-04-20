@@ -37,15 +37,24 @@ TARGET_TECHNICAL_REG_KEYWORDS = [
     "REGLAMENTO TECNICO",
 ]
 
-RECIPIENT_EMAIL = os.getenv("AGENT_RECIPIENT_EMAIL") or os.getenv(
+def get_env_value(*names: str, default: str) -> str:
+    for name in names:
+        value = os.getenv(name, "").strip()
+        if value:
+            return value
+    return default
+
+
+RECIPIENT_EMAIL = get_env_value(
+    "AGENT_RECIPIENT_EMAIL",
     "RECIPIENT_EMAIL",
-    "recipient@example.com",
+    default="recipient@example.com",
 )
-SENDER_EMAIL = os.getenv("AGENT_SENDER_EMAIL", "your_sender_email@example.com")
-SMTP_SERVER = os.getenv("AGENT_SMTP_SERVER", "smtp.example.com")
+SENDER_EMAIL = get_env_value("AGENT_SENDER_EMAIL", default="your_sender_email@example.com")
+SMTP_SERVER = get_env_value("AGENT_SMTP_SERVER", default="smtp.example.com")
 SMTP_PORT = int(os.getenv("AGENT_SMTP_PORT", "587"))
-SMTP_USER = os.getenv("AGENT_SMTP_USER", "smtp_user")
-SMTP_PASSWORD = os.getenv("AGENT_SMTP_PASSWORD", "smtp_password")
+SMTP_USER = get_env_value("AGENT_SMTP_USER", default="smtp_user")
+SMTP_PASSWORD = get_env_value("AGENT_SMTP_PASSWORD", default="smtp_password")
 
 AUDIT_LOG_FILE = os.path.join(BASE_DIR, "reg_monitor_audit_log.jsonl")
 
@@ -203,9 +212,9 @@ def classify_publication(pub: Dict[str, Any]) -> Dict[str, Any]:
 # =========================
 
 
-def generate_placeholder_summary(text: str, max_chars: int = 6000) -> str:
+def generate_placeholder_summary(text: str, max_input_chars: int = 6000) -> str:
     """Temporary summary generator until a real summarization service is connected."""
-    text = text[:max_chars]
+    text = text[:max_input_chars]
     return (
         "RESUMEN EJECUTIVO (EJEMPLO):\n"
         "- Resumen generado de forma simulada.\n"
@@ -275,7 +284,7 @@ def process_new_publications() -> None:
 
     publications = fetch_daily_publications()
     if not publications:
-        logging.info("No publications found. RUN OK - sin publicaciones encontradas")
+        logging.info("Ejecución OK - sin publicaciones encontradas")
         return
 
     processed_count = 0
@@ -301,7 +310,10 @@ def process_new_publications() -> None:
             )
 
         except Exception as error:
-            logging.exception("Error processing publication")
+            logging.exception(
+                "Error processing publication: %s",
+                pub.get("title") or pub.get("url") or "sin identificar",
+            )
             append_audit_log(
                 {
                     "title": pub.get("title"),
@@ -311,7 +323,7 @@ def process_new_publications() -> None:
             )
 
     logging.info(
-        "RUN OK - procesadas: %s, relevantes: %s",
+        "Ejecución OK - procesadas: %s, relevantes: %s",
         processed_count,
         relevant_count,
     )
