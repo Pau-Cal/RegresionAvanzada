@@ -19,6 +19,14 @@ def get_env_value(*names: str, default: str) -> str:
             return value
     return default
 
+
+def get_env_int(*names: str, default: int) -> int:
+    value = get_env_value(*names, default=str(default))
+    try:
+        return int(value)
+    except ValueError as error:
+        raise ValueError(f"Invalid integer value for {'/'.join(names)}: {value}") from error
+
 # =========================
 # CONFIGURATION
 # =========================
@@ -58,7 +66,7 @@ SENDER_EMAIL = get_env_value(
     default="",
 )
 SMTP_SERVER = get_env_value("AGENT_SMTP_SERVER", "SMTP_SERVER", default="")
-SMTP_PORT = int(get_env_value("AGENT_SMTP_PORT", "SMTP_PORT", default="587"))
+SMTP_PORT = get_env_int("AGENT_SMTP_PORT", "SMTP_PORT", default=587)
 SMTP_USER = get_env_value("AGENT_SMTP_USER", "SMTP_USER", default="")
 SMTP_PASSWORD = get_env_value(
     "AGENT_SMTP_PASSWORD",
@@ -264,6 +272,8 @@ def send_email_notification(subject: str, body: str, recipient: str) -> None:
     msg["To"] = recipient
 
     with smtplib.SMTP(SMTP_SERVER, SMTP_PORT, timeout=30) as server:
+        if not server.has_extn("starttls"):
+            raise RuntimeError("SMTP server does not support STARTTLS.")
         server.starttls()
         server.login(SMTP_USER, SMTP_PASSWORD)
         server.send_message(msg)
