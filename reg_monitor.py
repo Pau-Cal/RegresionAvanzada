@@ -34,9 +34,6 @@ SMTP_PASSWORD = os.getenv("AGENT_SMTP_PASSWORD", "smtp_password")
 
 AUDIT_LOG_FILE = Path(__file__).with_name("reg_monitor_audit_log.jsonl")
 
-LLM_API_KEY = os.getenv("LLM_API_KEY", "YOUR_API_KEY_HERE")
-LLM_MODEL_NAME = "gpt-4.1-mini"
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 
@@ -97,7 +94,7 @@ def classify_publication(pub: Dict[str, Any]) -> Dict[str, Any]:
     return pub
 
 
-def summarize_with_llm(text: str, max_chars: int = 6000) -> str:
+def summarize_publication(text: str, max_chars: int = 6000) -> str:
     trimmed_text = text[:max_chars].strip()
     first_line = (trimmed_text.splitlines() + ["Sin contenido disponible."])[0]
     return (
@@ -115,10 +112,16 @@ def send_email_notification(subject: str, body: str, recipient: str) -> None:
     msg["From"] = SENDER_EMAIL
     msg["To"] = recipient
 
-    with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-        server.starttls()
-        server.login(SMTP_USER, SMTP_PASSWORD)
-        server.send_message(msg)
+    try:
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.send_message(msg)
+    except smtplib.SMTPException as exc:
+        raise RuntimeError(
+            "SMTP delivery failed; verify AGENT_SMTP_SERVER, AGENT_SMTP_PORT, "
+            "AGENT_SMTP_USER, AGENT_SMTP_PASSWORD, and AGENT_SENDER_EMAIL."
+        ) from exc
 
     logging.info("Email sent")
 
@@ -147,7 +150,7 @@ def process_new_publications() -> None:
             if not pub["is_relevant"]:
                 continue
 
-            summary = summarize_with_llm(pub["text"])
+            summary = summarize_publication(pub["text"])
             send_email_notification(f"[Regulación AR] {pub['title']}", summary, RECIPIENT_EMAIL)
         except Exception as exc:
             logging.exception(
