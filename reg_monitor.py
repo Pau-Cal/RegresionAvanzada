@@ -37,7 +37,7 @@ TARGET_TECHNICAL_REG_KEYWORDS = [
     "REGLAMENTO TECNICO",
 ]
 
-RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL", "paula.calviello@dell.com")
+RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL", "recipient@example.com")
 SENDER_EMAIL = os.getenv("AGENT_SENDER_EMAIL", "your_sender_email@example.com")
 SMTP_SERVER = os.getenv("AGENT_SMTP_SERVER", "smtp.example.com")
 SMTP_PORT = int(os.getenv("AGENT_SMTP_PORT", "587"))
@@ -45,9 +45,6 @@ SMTP_USER = os.getenv("AGENT_SMTP_USER", "smtp_user")
 SMTP_PASSWORD = os.getenv("AGENT_SMTP_PASSWORD", "smtp_password")
 
 AUDIT_LOG_FILE = os.path.join(BASE_DIR, "reg_monitor_audit_log.jsonl")
-
-LLM_API_KEY = os.getenv("LLM_API_KEY", "YOUR_API_KEY_HERE")
-LLM_MODEL_NAME = "gpt-4.1-mini"
 
 # =========================
 # LOGGING SETUP
