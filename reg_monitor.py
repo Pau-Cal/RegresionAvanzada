@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import smtplib
-from datetime import datetime
+from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from html.parser import HTMLParser
 from typing import Any, Dict, List, Optional
@@ -259,7 +259,7 @@ def send_email_notification(subject: str, body: str, recipient: str) -> None:
 
 def append_audit_log(entry: Dict[str, Any]) -> None:
     entry = dict(entry)
-    entry["logged_at"] = datetime.utcnow().isoformat()
+    entry["logged_at"] = datetime.now(timezone.utc).isoformat()
     with open(AUDIT_LOG_FILE, "a", encoding="utf-8") as file_handle:
         file_handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
