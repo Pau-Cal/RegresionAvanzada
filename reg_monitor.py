@@ -101,11 +101,13 @@ def classify_publication(pub: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def summarize_with_llm(text: str, max_chars: int = 6000) -> str:
-    _ = (LLM_API_KEY, LLM_MODEL_NAME, text[:max_chars])
+    _ = (LLM_API_KEY, LLM_MODEL_NAME)
+    trimmed_text = text[:max_chars].strip()
+    first_line = trimmed_text.splitlines()[0] if trimmed_text else "Sin contenido disponible."
     return (
         "RESUMEN EJECUTIVO (EJEMPLO):\n"
         "- Resumen generado de forma simulada.\n"
-        "- Norma con posibles impactos regulatorios.\n"
+        f"- Extracto analizado: {first_line}\n"
     )
 
 
