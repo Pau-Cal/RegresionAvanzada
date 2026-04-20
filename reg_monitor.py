@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from pathlib import Path
 from typing import Any, Dict, List
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -58,11 +59,7 @@ def fetch_daily_publications() -> List[Dict[str, Any]]:
         if not relative_url:
             continue
 
-        url = (
-            relative_url
-            if not relative_url.startswith("/")
-            else f"{BOLETIN_BASE_URL}{relative_url}"
-        )
+        url = urljoin(BOLETIN_BASE_URL, relative_url)
         publications.append({"title": title, "url": url})
 
     logging.info("Found %d publications.", len(publications))
@@ -101,9 +98,8 @@ def classify_publication(pub: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def summarize_with_llm(text: str, max_chars: int = 6000) -> str:
-    _ = (LLM_API_KEY, LLM_MODEL_NAME)
     trimmed_text = text[:max_chars].strip()
-    first_line = trimmed_text.splitlines()[0] if trimmed_text else "Sin contenido disponible."
+    first_line = (trimmed_text.splitlines() + ["Sin contenido disponible."])[0]
     return (
         "RESUMEN EJECUTIVO (EJEMPLO):\n"
         "- Resumen generado de forma simulada.\n"
