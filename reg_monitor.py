@@ -204,6 +204,7 @@ def classify_publication(pub: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def generate_placeholder_summary(text: str, max_chars: int = 6000) -> str:
+    """Temporary summary generator until a real summarization service is connected."""
     text = text[:max_chars]
     return (
         "RESUMEN EJECUTIVO (EJEMPLO):\n"
@@ -274,8 +275,7 @@ def process_new_publications() -> None:
 
     publications = fetch_daily_publications()
     if not publications:
-        logging.info("No publications found.")
-        print("RUN OK - sin publicaciones encontradas")
+        logging.info("No publications found. RUN OK - sin publicaciones encontradas")
         return
 
     processed_count = 0
@@ -310,7 +310,11 @@ def process_new_publications() -> None:
                 }
             )
 
-    print(f"RUN OK - procesadas: {processed_count}, relevantes: {relevant_count}")
+    logging.info(
+        "RUN OK - procesadas: %s, relevantes: %s",
+        processed_count,
+        relevant_count,
+    )
 
 
 # =========================
